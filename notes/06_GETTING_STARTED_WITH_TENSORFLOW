@@ -2,8 +2,8 @@ This starts working with Tensorflow.
 
 4 types of tensors:
 - Constant: tf.constant()
-- Variable: Add functionality to the graph for things like training parameters. must have a start value
-- Placeholder:
+- Variable: Add functionality to the graph for things like training parameters. must have a start value.
+- Placeholder: Just there to hold the structure. They are put in place to later store a dynamic value needed by the graph.
 - Sparse (advanced)
 
 This course covers the Constant, Varialbe and Placeholder types.
