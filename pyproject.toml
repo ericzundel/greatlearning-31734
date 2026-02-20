@@ -8,3 +8,13 @@ dependencies = [
     "scipy",
     "tensorflow[and-cuda]",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff",
+]
+
+[tool.ruff]
+src = ["exercises"]
+
+[tool.ruff.format]
