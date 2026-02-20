@@ -1,7 +1,7 @@
 [project]
-name = "mitx-686x"
+name = "greatlearning-31734"
 version = "0.1.0"
-requires-python = "==3.13"
+requires-python = ">=3.13.5,<3.14"
 dependencies = [
     "numpy",
     "matplotlib",
