@@ -1,0 +1,10 @@
+This starts working with Tensorflow.
+
+4 types of tensors:
+- Constant: tf.constant()
+- Variable: Add functionality to the graph for things like training parameters. must have a start value
+- Placeholder:
+- Sparse (advanced)
+
+This course covers the Constant, Varialbe and Placeholder types.
+
