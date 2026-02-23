@@ -7,6 +7,8 @@ dependencies = [
     "matplotlib",
     "scipy",
     "tensorflow[and-cuda]",
+    "opencv-python",  # Getting it like this doesn't have CUDA support (hardware accelleration)
+    "opencv-contrib-python"
 ]
 
 [dependency-groups]
