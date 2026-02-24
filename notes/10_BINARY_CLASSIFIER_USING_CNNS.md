@@ -26,3 +26,5 @@ Convolution Layer:
 ![Fully Connected Layer](image-10-2.png)
 
 (Workshop with jupyter notebook example starts at 17:12)
+
+Cat & Dog images.
