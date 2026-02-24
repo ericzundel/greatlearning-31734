@@ -7,35 +7,35 @@ mnist = tf.keras.datasets.mnist
 
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 # Convert values from 0-255 integers to 0.0 to 1.0
-x_train, x_test = x_train /255.0, x_test / 255.0
+x_train, x_test = x_train / 255.0, x_test / 255.0
 
 # Build the model
-model = tf.keras.models.Sequential([
-    # Layer 1: change 2D array to 1D array
-    tf.keras.layers.Flatten(input_shape=(28,28)),
-    # Create a layer of fully connected neurons.
-    # activation means activation is the element-wise activation function
-    # relu means: Rectified Linear Unit activation, aka only activate on positive input
-    tf.keras.layers.Dense(128,activation='relu'),
-
-    # This is a regularization tehchnique, used during training to prevent a neural network
-    # from overfitting (memorizing the input data).
-    # .2 means randomly ignore 20% of the input neurons.
-    tf.keras.layers.Dropout(0.2),
-
-    # Output layer, one neuron for each digit.
-    tf.keras.layers.Dense(10),
-])
+model = tf.keras.models.Sequential(
+    [
+        # Layer 1: change 2D array to 1D array
+        tf.keras.layers.Flatten(input_shape=(28, 28)),
+        # Create a layer of fully connected neurons.
+        # activation means activation is the element-wise activation function
+        # relu means: Rectified Linear Unit activation, aka only activate on positive input
+        tf.keras.layers.Dense(128, activation="relu"),
+        # This is a regularization tehchnique, used during training to prevent a neural network
+        # from overfitting (memorizing the input data).
+        # .2 means randomly ignore 20% of the input neurons.
+        tf.keras.layers.Dropout(0.2),
+        # Output layer, one neuron for each digit.
+        tf.keras.layers.Dense(10),
+    ]
+)
 
 # Let's take a look at running the model on the first image in the training set
 predictions = model(x_train[:1]).numpy()
 # This returns a value for each neuron in the output. Note that some are negative
-print ("predictions: ", predictions)
+print("predictions: ", predictions)
 
 # We can get the probability of each class instead of just the values of the vector
 # softmax will convert to a floating point value between 0-1.0
 value = tf.nn.softmax(predictions).numpy()
-print ("after softmax: ", value)
+print("after softmax: ", value)
 
 
 # How to comput loss for each example
@@ -43,7 +43,7 @@ loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 print("Computed loss: ", loss_fn(y_train[:1], predictions).numpy())
 
 # Model complation
-model.compile(optimizer='adam', loss=loss_fn, metrics=['accuracy'])
+model.compile(optimizer="adam", loss=loss_fn, metrics=["accuracy"])
 
 # I0000 00:00:1771853092.359946 3996955 device_compiler.h:196] Compiled cluster using XLA!  This line is logged at most once for the lifetime of the process.
 
@@ -71,7 +71,7 @@ model.evaluate(x_test, y_test, verbose=2)
 #
 # 97.8% accuracy
 
-model.save('models/mnist_5_epochs.keras')
+model.save("models/mnist_5_epochs.keras")
 
 # Now, in the video, they keep training it
 model.fit(x_train, y_train, epochs=20)
@@ -127,4 +127,4 @@ model.evaluate(x_test, y_test, verbose=2)
 # 313/313 - 0s - 614us/step - accuracy: 0.9797 - loss: 0.0913
 # Note that accuracy is barely imporved at 98%
 
-model.save('models/mnist_20_epochs.keras')
+model.save("models/mnist_20_epochs.keras")

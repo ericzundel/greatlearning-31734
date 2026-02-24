@@ -9,12 +9,13 @@ import numpy as np
 import tensorflow as tf
 
 DEBUG = False
-NOISE_THRESHOLD=30
-MODEL_INPUT_SHAPE=(28,28)
-SCALED_INPUT_SHAPE=(20,20)
+NOISE_THRESHOLD = 30
+MODEL_INPUT_SHAPE = (28, 28)
+SCALED_INPUT_SHAPE = (20, 20)
+
 
 def non_noise_contours(contours: Sequence[ndarray]):
-    """ Only return contours larger than the noise threshold in width + height"""
+    """Only return contours larger than the noise threshold in width + height"""
     result = []
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
@@ -22,8 +23,9 @@ def non_noise_contours(contours: Sequence[ndarray]):
             result.append(contour)
     return result
 
+
 def erode_contours(img: MatLike, x_offset: int, letters: list[tuple[int, ndarray]]):
-    """ A processing step that attempts to separate letters, but fails miserably"""
+    """A processing step that attempts to separate letters, but fails miserably"""
 
     orig_width, orig_height = img.shape
 
@@ -39,22 +41,28 @@ def erode_contours(img: MatLike, x_offset: int, letters: list[tuple[int, ndarray
             cv2.waitKey()
 
         # Now find contours on 'thinner_thresh' instead of 'thresh'
-        eroded_contours, _ = cv2.findContours(thinner_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        eroded_contours, _ = cv2.findContours(
+            thinner_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         eroded_contours = non_noise_contours(eroded_contours)
 
         # Pull out the width and height from the contours into a list
-        all_bounds = map(lambda rect: (cv2.boundingRect(rect)[2], cv2.boundingRect(rect)[3]), eroded_contours)
+        all_bounds = map(
+            lambda rect: (cv2.boundingRect(rect)[2], cv2.boundingRect(rect)[3]),
+            eroded_contours,
+        )
 
-        if len(eroded_contours) > 1 and (orig_width,orig_height) not in all_bounds:
-
+        if len(eroded_contours) > 1 and (orig_width, orig_height) not in all_bounds:
             for cnt in eroded_contours:
                 x, y, w, h = cv2.boundingRect(cnt)
 
-                roi = thinner_thresh[y:y+h, x:x+w]
+                roi = thinner_thresh[y : y + h, x : x + w]
                 if DEBUG:
                     cv2.imshow("adding split contour", roi)
                     cv2.waitKey()
-                letters.append((x_offset + x, roi)) # Store X coordinate to sort them later
+                letters.append(
+                    (x_offset + x, roi)
+                )  # Store X coordinate to sort them later
             return
         else:
             # erode again!
@@ -64,11 +72,11 @@ def erode_contours(img: MatLike, x_offset: int, letters: list[tuple[int, ndarray
 
 
 def process_watershed(img: ndarray) -> ndarray:
-    """ This pre-processing step finds boundaries between letters that might be overlapping."""
+    """This pre-processing step finds boundaries between letters that might be overlapping."""
 
     # Assuming 'thresh' is your binary image (white text, black background)
     # 1. Clean up noise first
-    kernel = np.ones((3,3), np.uint8)
+    kernel = np.ones((3, 3), np.uint8)
     opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel, iterations=2)
 
     # 2. Distance Transform
@@ -101,7 +109,7 @@ def process_watershed(img: ndarray) -> ndarray:
     # Let's turn those boundaries into a mask to separate the letters
 
     # this makes a 1 pixel separation - not enough for the contours algorithm!
-    #img[markers == -1] = 0
+    # img[markers == -1] = 0
 
     # Markers is a 2d array (the image)
     # marker is a 1d array (one row in the image)
@@ -114,12 +122,13 @@ def process_watershed(img: ndarray) -> ndarray:
             if pixel == -1:
                 img[y][x] = 0
                 if x > 0:
-                    img[y][x-1] = 0
-                if x < len(row) -1:
-                    img[y][x+1] = 0
-            x +=1
+                    img[y][x - 1] = 0
+                if x < len(row) - 1:
+                    img[y][x + 1] = 0
+            x += 1
         y += 1
     return img
+
 
 def split_by_contours(img: ndarray, x_offset: int, try_watershed: bool):
 
@@ -129,9 +138,9 @@ def split_by_contours(img: ndarray, x_offset: int, try_watershed: bool):
     for cnt in non_noise_contours(contours):
         # Get the bounding box for each contour
         x, y, w, h = cv2.boundingRect(cnt)
-        region_of_interest = img[y:y+h, x:x+w].copy()
+        region_of_interest = img[y : y + h, x : x + w].copy()
 
-        if try_watershed and float(w)/h > 1.1:
+        if try_watershed and float(w) / h > 1.1:
             # Try using watershed to separate the characters
             watershed_img = process_watershed(region_of_interest)
             # Call this same fuction to try to split this image, but don't try to use
@@ -158,6 +167,7 @@ def split_by_contours(img: ndarray, x_offset: int, try_watershed: bool):
 def separate_characters(img: ndarray) -> Sequence[ndarray]:
     return split_by_contours(img, 0, True)
 
+
 def resize_and_center_image(img):
     height, width = img.shape
     # Prepare a black image to copy the resized shape into
@@ -173,43 +183,51 @@ def resize_and_center_image(img):
     y_offset = int((new_size - new_height) / 2) + 4
 
     # resize the image, keeping the proportion
-    #resized = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_AREA)
+    # resized = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_AREA)
     resized = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
 
     # copy the resized image to the center of the new black image
-    canvas[y_offset:y_offset+new_height, x_offset:x_offset+new_width] = resized
+    canvas[y_offset : y_offset + new_height, x_offset : x_offset + new_width] = resized
     return canvas
+
 
 def resize_and_center_images(image_list) -> list[ndarray]:
     return list(map(lambda img: resize_and_center_image(img), image_list))
+
 
 def thin_images1(image_list) -> list[ndarray]:
     result = []
     for img in image_list:
         thinned = cv2.ximgproc.thinning(img)
         cv2.imshow("thinned", thinned)
-        kernel = np.ones((2,2), np.uint8)
+        kernel = np.ones((2, 2), np.uint8)
         thicker = cv2.dilate(thinned, kernel, iterations=1)
         cv2.imshow("thicker", thicker)
         cv2.waitKey()
         result.append(thicker)
     return result
 
+
 def thin_images2(image_list) -> list[ndarray]:
     result = []
     for img in image_list:
-        kernel = np.ones((10,10), np.uint8) # Use a larger kernel if the original image is high-res
+        kernel = np.ones(
+            (10, 10), np.uint8
+        )  # Use a larger kernel if the original image is high-res
         thinner = cv2.erode(img, kernel, iterations=2)
         result.append(thinner)
     return result
+
 
 def blur_images(image_list, radius) -> list[ndarray]:
     return list(map(lambda img: cv2.GaussianBlur(img, radius, 0), image_list))
 
 
 def outline_images(image_list) -> list[ndarray]:
-    kernel = np.ones((3,3), np.uint8)
-    return list(map(lambda img: cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel), image_list))
+    kernel = np.ones((3, 3), np.uint8)
+    return list(
+        map(lambda img: cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel), image_list)
+    )
 
 
 def debug_images(image_list, prefix):
@@ -217,12 +235,14 @@ def debug_images(image_list, prefix):
         count = 1
         for img in image_list:
             cv2.imshow(f"{prefix} {count}", img)
-            count +=1
+            count += 1
         cv2.waitKey()
+
 
 # Workaround for 'QFontDatabase: Cannot find font directory...'
 # Tell the Qt engine inside OpenCV where to find system fonts
-os.environ['QT_QPA_FONTDIR'] = '/usr/share/fonts'
+os.environ["QT_QPA_FONTDIR"] = "/usr/share/fonts"
+
 
 def extract_digit_images(img):
 
@@ -234,28 +254,28 @@ def extract_digit_images(img):
 
     # We should probably only watershed after a piece of the image shows up wider than it
     # should be.
-    #img = process_watershed(img)
-    #debug_images([img], "watershed")
+    # img = process_watershed(img)
+    # debug_images([img], "watershed")
 
     # Separate the image by finding the shape of the letters:
     # Find coordinates of all shapes
     imgs = separate_characters(img)
 
     # thin out the characters?
-    #imgs = thin_images2(imgs)
+    # imgs = thin_images2(imgs)
 
-    #imgs = outline_images(imgs)
-    #debug_images(imgs, "outlined")
+    # imgs = outline_images(imgs)
+    # debug_images(imgs, "outlined")
 
-    #imgs = blur_images(imgs, (31, 51))
-    #debug_images(imgs, "blurred 21x21")
+    # imgs = blur_images(imgs, (31, 51))
+    # debug_images(imgs, "blurred 21x21")
 
     # Rezize them to 20x20 and center in a 28x28 square
     imgs = resize_and_center_images(imgs)
     debug_images(imgs, "resized")
 
-    #imgs = blur_images(imgs, (3,3))
-    #debug_images(imgs, "blurred 3x3")
+    # imgs = blur_images(imgs, (3,3))
+    # debug_images(imgs, "blurred 3x3")
 
     # Set image pixel values from ints 0-155  to floats ranging from 0.0-1.0
     imgs = np.array(imgs) / 255.0
@@ -294,14 +314,13 @@ def main():
     result = []
     string_output = ""
     for prediction in predictions:
-        #print("prediction: ", prediction)
+        # print("prediction: ", prediction)
         digit_val = np.argmax(tf.nn.softmax(prediction))
-        #print (f"I pick {digit_val}")
+        # print (f"I pick {digit_val}")
         result.append(digit_val)
         string_output = string_output + str(int(digit_val))
 
-
     print(string_output)
 
-main()
 
+main()
