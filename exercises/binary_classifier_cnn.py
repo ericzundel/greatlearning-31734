@@ -6,7 +6,6 @@
 #  wget https://www.dropbox.com/s/i37jfni3d29raoc/test_set.zip
 
 from pathlib import Path
-from os import dirname
 
 import tensorflow
 import numpy as np
@@ -24,6 +23,17 @@ from tensorflow.keras.preprocessing import image
 import matplotlib.pyplot as plot
 import matplotlib.image as mpimage
 
-SCRIPT_DIR = Path(dirname(__file__))
+SCRIPT_DIR = Path(__file__).parent
 TRAINING_DATA_DIR = Path(SCRIPT_DIR, "..", "data", "training_set", "training_set")
-TEST_DATA_DIR = Path(SCRIPT_DIR)
+TEST_DATA_DIR = Path(SCRIPT_DIR, "..", "data", "test_set", "test_set")
+
+IMAGE_WIDTH = 150
+IMAGE_HEIGHT = 150
+
+NUM_TRAIN_SAMPLE = 100
+NUM_VALIDATION_SAMPLES = 100
+EPOCHS = 20
+BATCH_SIZE = 20
+
+#for file in Path(TRAINING_DATA_DIR, "cats").iterdir():
+#    print(f"file: {file}")
